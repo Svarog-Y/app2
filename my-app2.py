@@ -18,7 +18,8 @@ def color_producer(elevation):
         return 'red'
 
 map = folium.Map(location=[38.58, -99.09], zoom_start=6, tiles="Stamen Terrain")
-fg = folium.FeatureGroup(name="My Map")
+vlc = folium.FeatureGroup(name="Volcanoes")
+pop = folium.FeatureGroup(name="Population")
 
 for ind in df.index:
     iframe = folium.IFrame(
@@ -31,9 +32,9 @@ for ind in df.index:
         width=250, 
         height=100
         )
-    fg.add_child(folium.CircleMarker(
+    vlc.add_child(folium.Circle(
         location=[df['LAT'][ind], df['LON'][ind]], 
-        radius = 8,
+        radius = 2000,
         opacity = 0.8,
         popup=folium.Popup(iframe),
         tooltip=df['NAME'][ind],
@@ -43,5 +44,18 @@ for ind in df.index:
         fill_opacity=0.5
         ))
 
-map.add_child(fg)
-map.save(os.getcwd() + "\\Map2.html")
+population = open("world.json", 'r', encoding='utf-8-sig').read()
+pop_data = pandas.read_json(population, lines=True)
+
+pop.add_child(
+    folium.GeoJson(
+        data= population, #(open("world.json", 'r', encoding='utf-8-sig').read()),
+        name='Population',
+        style_function=lambda x: {'fillColor':'green' if x['properties']['POP2005'] < 10000000 else 'orange' if x['properties']['POP2005'] < 100000000 else 'red'}
+        )
+    )
+
+map.add_child(vlc)
+map.add_child(pop)
+map.add_child(folium.LayerControl())
+map.save("Map.html")
